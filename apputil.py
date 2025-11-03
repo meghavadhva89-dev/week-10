@@ -5,6 +5,7 @@ import pandas as pd
 
 MODEL_1 = Path("model_1.pickle")
 MODEL_2 = Path("model_2.pickle")
+MODEL_2_MAP = Path("roast_map.pickle")
 MODEL_3 = Path("model_3.pickle")
 
 
@@ -85,9 +86,23 @@ def predict_rating(df_X, text: bool = False):
     if MODEL_2.exists():
         with MODEL_2.open("rb") as f:
             obj = pickle.load(f)
+
+        # Support multiple formats:
+        # - dict with {'model': estimator, 'roast_map': {...}}
+        # - estimator object saved directly (common autograder expectation)
         if isinstance(obj, dict) and "model" in obj and "roast_map" in obj:
             model2 = obj["model"]
             roast_map = obj["roast_map"]
+        else:
+            # assume obj is the estimator
+            model2 = obj
+            # try to load roast_map from separate file if present
+            if MODEL_2_MAP.exists():
+                with MODEL_2_MAP.open("rb") as f:
+                    try:
+                        roast_map = pickle.load(f)
+                    except Exception:
+                        roast_map = {}
 
     model1 = None
     if MODEL_1.exists():
